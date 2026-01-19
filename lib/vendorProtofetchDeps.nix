@@ -1,14 +1,16 @@
-{ lib, parseProtofetchLock, parseProtofetchToml, fetchProtofetchDep, policyMatcher }:
+{ lib, parseProtofetchLock, parseProtofetchToml, mkFetchProtofetchDep, policyMatcher }:
 
 {
   protofetchToml,
   protofetchLock,
   extraDeps ? {},
   pkgs ? null,
+  forceSsh ? false,
 }:
 let
   toml = parseProtofetchToml protofetchToml;
   lockedDeps = parseProtofetchLock protofetchLock;
+  fetchProtofetchDep = mkFetchProtofetchDep { inherit forceSsh; };
 
   fetchedDeps = builtins.listToAttrs (map (dep:
     let
@@ -97,9 +99,9 @@ else
     inherit toml lockedDeps allDeps copyScript;
     __functor = self: pkgs': self // {
       vendored = (import ./vendorProtofetchDeps.nix {
-        inherit lib parseProtofetchLock parseProtofetchToml fetchProtofetchDep policyMatcher;
+        inherit lib parseProtofetchLock parseProtofetchToml mkFetchProtofetchDep policyMatcher;
       }) {
-        inherit protofetchToml protofetchLock extraDeps;
+        inherit protofetchToml protofetchLock extraDeps forceSsh;
         pkgs = pkgs';
       };
     };
